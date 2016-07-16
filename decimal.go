@@ -24,6 +24,8 @@ import (
 	"math/big"
 	"strconv"
 	"strings"
+
+	"gopkg.in/mgo.v2/bson"
 )
 
 // DivisionPrecision is the number of decimal places in the result when it
@@ -530,6 +532,24 @@ func (d *Decimal) UnmarshalText(text []byte) error {
 // serialization.
 func (d Decimal) MarshalText() (text []byte, err error) {
 	return []byte(d.String()), nil
+}
+
+// SetBSON implements the bson.Setter interface.
+func (d *Decimal) SetBSON(raw bson.Raw) error {
+	var str string
+	raw.Unmarshal(&str)
+
+	decimal, err := NewFromString(str)
+	*d = decimal
+	if err != nil {
+		return fmt.Errorf("Error decoding string '%s': %s", str, err)
+	}
+	return nil
+}
+
+// GetBSON implements the bson.Getter interface.
+func (d Decimal) GetBSON() (interface{}, error) {
+	return d.String(), nil
 }
 
 // NOTE: buggy, unintuitive, and DEPRECATED! Use StringFixed instead.
